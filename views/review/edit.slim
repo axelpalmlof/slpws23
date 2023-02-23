@@ -1,0 +1,7 @@
+form action="/review/#{result['reviewId']}/update" method="post"
+    input type="hidden" name="title" value="#{result['title']}" 
+    input type="hidden" name="userId" value="#{result['userId']}" 
+    input type="text" name="rating" value="#{result['rating']}" 
+    input type="hidden" name="director" value="#{result['director']}" 
+
+    input type="submit" value="Edit it!"
