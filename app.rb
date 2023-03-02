@@ -34,8 +34,12 @@ get('/review/new') do
 
   post('/review/:id/update') do
     id = params[:id].to_i
+    title = params[:title]
+    userId = params[:userId]
+    rating = params[:rating]
+    director = params[:director]
     db = SQLite3::Database.new("db/db.db")
-    db.execute("UPDATE review SET title=?,director=? WHERE reviewId =?",title,director,id)
+    db.execute("UPDATE review SET title=?,userId=?,rating=?,director=? WHERE reviewId =?",title,userId,rating,director,id)
     redirect('/review')
   end
   
@@ -45,4 +49,11 @@ get('/review/new') do
     db.results_as_hash = true
     result = db.execute("SELECT * FROM review WHERE reviewId = ?",id).first
     slim(:"/review/edit",locals:{result:result})
+  end
+
+  post('/review/:id/delete') do
+    id = params[:id].to_i
+    db = SQLite3::Database.new("db/db.db")
+    db.execute("DELETE FROM review WHERE reviewId = ?",id)
+    redirect('/review')
   end
