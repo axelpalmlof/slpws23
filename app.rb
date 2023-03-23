@@ -2,6 +2,9 @@ require 'sinatra'
 require 'sinatra/reloader'
 require 'slim'
 require 'sqlite3'
+require 'bcrypt'
+
+enable :sessions
 
 get('/')  do
     slim(:start)
@@ -56,4 +59,49 @@ get('/review/new') do
     db = SQLite3::Database.new("db/db.db")
     db.execute("DELETE FROM review WHERE reviewId = ?",id)
     redirect('/review')
+  end
+
+  get('/login') do
+    slim(:"/login")
+  end
+
+  post('/login') do
+    username = params[:username]
+    password = params[:password]
+    db = SQLite3::Database.new('db/db.db')
+    db.results_as_hash = true 
+    result = db.execute("SELECT * FROM user WHERE username =?",username).first
+    pwdigest = result["pwdigest"]
+    id = result["id"]
+  
+    if BCrypt::Password.new(pwdigest) == password
+      session[:id] = userId
+      redirect('/review')
+  
+    else
+      "Wrong password"
+    end
+  end
+
+  get('/user/new') do
+    slim(:"user/new")
+  end
+
+  post('/user/new') do
+    username = params[:username]
+    password = params[:password]
+    passwordConfirm = params[:passwordConfirm]
+  
+    if password == passwordConfirm
+
+      passwordDigest = BCrypt::Password.create(password)
+      db = SQLite3::Database.new('db/db.db')
+      db.execute("INSERT INTO user (username,pwdigest) VALUES (?,?)",username,passwordDigest)
+      redirect('/')
+  
+    else
+      "Password does not match"
+      slim(:"user/new")
+      
+    end
   end
