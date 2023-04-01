@@ -6,11 +6,11 @@ require 'bcrypt'
 
 enable :sessions
 
-get('/')  do
+  get('/')  do
     slim(:start)
   end 
 
-get('/review') do
+  get('/review') do
     db = SQLite3::Database.new("db/db.db")
     db.results_as_hash = true
     result = db.execute("SELECT * FROM review")
@@ -18,31 +18,32 @@ get('/review') do
     slim(:"review/index",locals:{review:result})
   end
 
-get('/review/new') do
-    slim(:"review/new")
+  get('/review/new') do
+    if session[:loggedId] != nil
+      slim(:"review/new")
+    else
+      redirect('/login')
+    end
   end
   
   post('/review/new') do
-    userId = params[:userId]
+    userId = session[:loggedId]
     title = params[:title]
     rating = params[:rating]
     director = params[:director]
     db = SQLite3::Database.new("db/db.db")
     db.execute("INSERT INTO review (userId, title, rating, director) VALUES (?,?,?,?)",userId, title, rating, director)
-    db.execute("INSERT INTO director (name) VALUES (?)",director)
-    tempId = db.execute("SELECT directorId FROM director WHERE name = ?", director)
-    db.execute("INSERT INTO movie (name, directorId) VALUES (?,?)",title, tempId)
     redirect('/review')
   end
 
   post('/review/:id/update') do
     id = params[:id].to_i
     title = params[:title]
-    userId = params[:userId]
+    userId = session[:loggedId]
     rating = params[:rating]
     director = params[:director]
     db = SQLite3::Database.new("db/db.db")
-    db.execute("UPDATE review SET title=?,userId=?,rating=?,director=? WHERE reviewId =?",title,userId,rating,director,id)
+    db.execute("UPDATE review SET title=?,userId=?,rating=?,director=? WHERE reviewId =?",title,userId,rating,id)
     redirect('/review')
   end
   
@@ -55,10 +56,21 @@ get('/review/new') do
   end
 
   post('/review/:id/delete') do
+
     id = params[:id].to_i
     db = SQLite3::Database.new("db/db.db")
-    db.execute("DELETE FROM review WHERE reviewId = ?",id)
-    redirect('/review')
+    tempId = db.execute("SELECT userId FROM review WHERE reviewId = ?",id)[0][0]
+
+    if session[:loggedId] == tempId || session[:loggedId] == 1
+      slim(:"review/new")
+      id = params[:id].to_i
+      db = SQLite3::Database.new("db/db.db")
+      db.execute("DELETE FROM review WHERE reviewId = ?", id)
+      redirect('/review')
+
+    else
+      redirect("/review")
+    end
   end
 
   get('/login') do
@@ -72,15 +84,16 @@ get('/review/new') do
     db.results_as_hash = true 
     result = db.execute("SELECT * FROM user WHERE username =?",username).first
     pwdigest = result["pwdigest"]
-    id = result["id"]
+    id = result["userId"]
   
     if BCrypt::Password.new(pwdigest) == password
-      session[:id] = userId
-      redirect('/review')
+      session[:loggedId] = id
+      redirect('/')
   
     else
       "Wrong password"
     end
+
   end
 
   get('/user/new') do
@@ -101,7 +114,13 @@ get('/review/new') do
   
     else
       "Password does not match"
-      slim(:"user/new")
-      
+      slim(:"user/new") 
     end
+
   end
+
+  get('/logout') do
+      session.clear
+      redirect('/')
+  end
+
