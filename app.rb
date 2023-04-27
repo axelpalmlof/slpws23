@@ -7,14 +7,14 @@ require_relative './model.rb'
 
 enable :sessions
 
+include Model
+
   get('/')  do
     slim(:start)
   end 
 
   get('/review') do
-    db = SQLite3::Database.new("db/db.db")
-    db.results_as_hash = true
-    result = db.execute("SELECT * FROM review")
+    result = getReviews()
     slim(:"review/index",locals:{review:result})
   end
 
@@ -39,11 +39,11 @@ enable :sessions
   post('/review/:id/update') do
     id = params[:id].to_i
     title = params[:title]
-    userId = session[:loggedId]
+    userId = session[:loggedId].to_i
     rating = params[:rating]
     director = params[:director]
     db = SQLite3::Database.new("db/db.db")
-    db.execute("UPDATE review SET title=?,userId=?,rating=?,director=? WHERE reviewId =?",title,userId,rating,id)
+    db.execute("UPDATE review SET title=?,userId=?,rating=?,director=? WHERE reviewId =?",title,userId,rating,director,id)
     redirect('/review')
   end
   
