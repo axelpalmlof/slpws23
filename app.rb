@@ -3,6 +3,7 @@ require 'sinatra/reloader'
 require 'slim'
 require 'sqlite3'
 require 'bcrypt'
+require_relative './model.rb'
 
 enable :sessions
 
@@ -14,7 +15,6 @@ enable :sessions
     db = SQLite3::Database.new("db/db.db")
     db.results_as_hash = true
     result = db.execute("SELECT * FROM review")
-    p result
     slim(:"review/index",locals:{review:result})
   end
 
@@ -124,3 +124,64 @@ enable :sessions
       redirect('/')
   end
 
+get '/movie/new' do
+  if session[:loggedId]
+    slim(:'movie/new')
+  else
+    redirect('/login')
+  end
+end
+
+post('/movie/new') do
+  userId = session[:loggedId]
+  title = params[:title]
+  
+  db = SQLite3::Database.new("db/db.db")
+  movieId = db.execute("SELECT movieId FROM movie WHERE title = ?", title).first
+  
+  if movieId.nil?
+    db.execute("INSERT INTO movie (title) VALUES (?)", title)
+    movieId = db.last_insert_row_id
+  else
+    movieId = db.execute("SELECT movieId FROM movie WHERE title = ?", title)
+
+  end
+  
+  db.execute("INSERT INTO user_movie (userId, movieId) VALUES (?, ?)", userId, movieId)
+  
+  redirect('/movie')
+end
+
+get '/movie' do
+  if session[:loggedId]
+    db = SQLite3::Database.new('db/db.db')
+    db.results_as_hash = true
+    result = db.execute("SELECT * FROM movie INNER JOIN user_movie ON movie.movieId=user_movie.movieId WHERE user_movie.userId=?", session[:loggedId])
+    slim(:'movie/index', locals: {movies: result})
+  else
+    redirect('/login')
+  end
+end
+
+post '/movie/:id/delete/' do
+  if session[:loggedId]
+    movie_id = params[:id].to_i
+    user_id = session[:loggedId]
+    
+    db = SQLite3::Database.new('db/db.db')
+    db.execute("DELETE FROM user_movie WHERE userId=? AND movieId=?", user_id, movie_id)
+    
+    redirect '/movie'
+  else
+    redirect '/login'
+  end
+end
+
+get '/review/:id' do
+  db = SQLite3::Database.new('db/db.db')
+  db.results_as_hash = true
+  review = db.execute("SELECT * FROM review WHERE reviewId = ?", params[:id]).first
+  slim(:'review/show', locals: { review: review })
+end
+
+  

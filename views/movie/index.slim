@@ -1,0 +1,7 @@
+h1 Movies to Watch
+ul
+  - movies.each do |movie|
+    li
+      h3 = movie["title"]
+      form method="POST" action="/movie/#{movie['movieId']}/delete/"
+        input type="submit" value="Delete"
