@@ -1,7 +1,7 @@
 h1 Movies to Watch
 ul
-  - movies.each do |movie|
+  - movies.each do |i|
     li
-      h3 = movie["title"]
-      form method="POST" action="/movie/#{movie['movieId']}/delete/"
-        input type="submit" value="Delete"
+      h3 = i["title"]
+      form method="POST" action="/movie/#{i['movieId']}/delete/"
+        input type="submit" value="Watched"
