@@ -93,7 +93,6 @@ module Model
     #
     # @param [Integer] reviewId, the reviews id
     def deleteReview()
-        slim(:"review/new")
         id = params[:id].to_i
         db = dbConnectWh()
         db.execute("DELETE FROM review WHERE reviewId = ?", id)
