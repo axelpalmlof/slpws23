@@ -2,7 +2,7 @@ module Model
 
     # Connect to database with read and write access
     #
-    # @return [Database]
+    # @return [Database] for reading and writing to database
     def dbConnect()
         db = SQLite3::Database.new("db/db.db")
         db.results_as_hash = true
@@ -11,7 +11,7 @@ module Model
 
     # Connect to database with write access only
     #
-    # @return [Database]
+    # @return [Database] for writing to database
     def dbConnectWh()
         return SQLite3::Database.new("db/db.db")
     end
@@ -19,6 +19,10 @@ module Model
     # Retrieve all reviews from database
     #
     # @return [Hash]
+    #   * :userId [Integer] The ID of the author
+    #   * :title [String] The title of the movie
+    #   * :rating [String] thoughts of the movie
+    #   * :director [String] the movies director
     def getReview()
         db = dbConnect()
         return db.execute("SELECT * FROM review")
@@ -61,6 +65,10 @@ module Model
     # @param [Integer] reviewId, the reviews id
     #
     # @return [Hash]
+    #   * :userId [Integer] The ID of the author
+    #   * :title [String] The title of the movie
+    #   * :rating [String] thoughts of the movie
+    #   * :director [String] the movies director
     def showReview()
         db = dbConnect()
         return db.execute("SELECT * FROM review WHERE reviewId = ?", params[:id]).first
@@ -71,6 +79,10 @@ module Model
     # @param [Integer] reviewId, the reviews id
     #
     # @return [Hash]
+    #   * :userId [Integer] The ID of the author
+    #   * :title [String] The title of the movie
+    #   * :rating [String] thoughts of the movie
+    #   * :director [String] the movies director
     def editReview()
         id = params[:id].to_i
         db = dbConnect()
@@ -187,6 +199,9 @@ module Model
     # Shows all movies on a users watchlist
     #
     # @return [Hash]
+    #   * :userId [Integer] The ID of the author
+    #   * :title [String] The title of the movie
+    #   * :movieId [Integer] the movies id
     def getMovie()
         db = dbConnect()
         return db.execute("SELECT * FROM movie INNER JOIN user_movie ON movie.movieId=user_movie.movieId WHERE user_movie.userId=?", session[:loggedId])
